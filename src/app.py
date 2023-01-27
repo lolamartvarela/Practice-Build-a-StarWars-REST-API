@@ -32,6 +32,9 @@ def handle_invalid_usage(error):
     return jsonify(error.to_dict()), error.status_code
 
 # generate sitemap with all your endpoints
+@app.route('/')
+def sitemap():
+    return generate_sitemap(app)
 
 # GET USUARIO
 @app.route('/usuario', methods=['GET'])
@@ -82,7 +85,58 @@ def get_info_planetas(planetas_id):
     return jsonify(planetas.serialize()), 200
 
 # POST PLANETAS
+@app.route('/usuario/<int:usuario_id>/favoritos/planetas', methods=['POST'])
+def add_new_favourite_planet(usuario_id):
+    request_body = request.json
+    print(request_body)
+    print(usuario_id)
+    new_favorito = Favoritos(usuario_id=usuario_id, planetas_id=request_body["planetas_id"])
+    db.session.add(new_favorito)
+    db.session.commit()
+    usuario = Favoritos.query.filter_by(usuario_id=usuario_id).first()
+    print(usuario)
+    return jsonify(request_body),200
 
+# POST PERSONAJES
+@app.route('/usuario/<int:usuario_id>/favoritos/personajes', methods=['POST'])
+def add_new_favourite_person(usuario_id):
+    request_body = request.json
+    print(request_body)
+    print(usuario_id)
+    new_favorito = Favoritos(usuario_id=usuario_id, personajes_id=request_body["personajes_id"])
+    db.session.add(new_favorito)
+    db.session.commit()
+    usuario = Favoritos.query.filter_by(usuario_id=usuario_id).first()
+    print(usuario)
+    return jsonify(request_body),200
+
+    # DELETE PLANETAS
+@app.route('/usuario/<int:usuario_id>/favoritos/planetas', methods=['DELETE'])
+def eliminar_planeta_favorito(usuario_id):
+    request_body=request.json
+    print(request_body)
+    print(usuario_id)
+    query= Favoritos.query.filter_by(usuario_id=usuario_id,planetas_id=request_body["planetas_id"]).first()
+    print(query)
+    if query is None:
+        return jsonify({"msg":"No hubo coincidencias, no hay nada para eliminar"}),404
+    db.session.delete(query)
+    db.session.commit() 
+    return jsonify({"msg":"El favorito ha sido eliminado correctamente"}),200
+
+        # DELETE PERSONAJES
+@app.route('/usuario/<int:usuario_id>/favoritos/personajes', methods=['DELETE'])
+def eliminar_personaje_favorito(usuario_id):
+    request_body=request.json
+    print(request_body)
+    print(usuario_id)
+    query= Favoritos.query.filter_by(usuario_id=usuario_id,personajes_id=request_body["personajes_id"]).first()
+    print(query)
+    if query is None:
+        return jsonify({"msg":"No hubo coincidencias, no hay nada para eliminar"}),404
+    db.session.delete(query)
+    db.session.commit() 
+    return jsonify({"msg":"El favorito ha sido eliminado correctamente"}),200
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
