@@ -11,8 +11,16 @@ from admin import setup_admin
 from models import db, Usuario, Favoritos, Personajes, Planetas, Vehiculos
 #from models import Person
 
+# Importacion JWT
+from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, JWTManager
+
+
 app = Flask(__name__)
 app.url_map.strict_slashes = False
+
+# Setup the Flask-JWT-Extended extension
+app.config["JWT_SECRET_KEY"] = "super-secret"  # Change this!
+jwt = JWTManager(app)
 
 db_url = os.getenv("DATABASE_URL")
 if db_url is not None:
@@ -137,6 +145,46 @@ def eliminar_personaje_favorito(usuario_id):
     db.session.delete(query)
     db.session.commit() 
     return jsonify({"msg":"El favorito ha sido eliminado correctamente"}),200
+
+# @app.route('/user', methods=['POST'])
+# def add_user():
+#     request_body = request.data
+#     decoded_object = json.loads(request_body)
+#     get_email = User.query.filter_by(email=decoded_object["email"]).first()
+#     if get_email is None:
+#         new_user = User(user_name=decoded_object["user_name"], email=decoded_object["email"], password=decoded_object["password"])
+#         db.session.add(new_user)
+#         db.session.commit()
+#         return jsonify({"msg":"usuario creado exitosamente"}), 200
+#     else:
+#         return jsonify({"msg":"el email ya existe"}), 400
+
+# Create a route to authenticate your users and return JWTs. The
+# create_access_token() function is used to actually generate the JWT.
+@app.route("/login", methods=["POST"])
+def login():
+    email = request.json.get("email", None)
+    password = request.json.get("password", None)
+    get_usuario = Usuario.query.filter_by(email=email).first()
+    print(get_usuario.email)
+   
+    if email != get_usuario.email or password != get_usuario.password:
+        return jsonify({"msg": "Bad username or password"}), 401
+
+    access_token = create_access_token(identity=email)
+    return jsonify(access_token=access_token)
+
+# Protect a route with jwt_required, which will kick out requests
+# without a valid JWT present.
+@app.route("/protected", methods=["GET"])
+@jwt_required()
+def protected():
+    # Access the identity of the current user with get_jwt_identity
+    current_usuario = get_jwt_identity()
+    get_usuario = Usuario.query.filter_by(email=current_usuario).first()
+    print(get_usuario.serialize())
+    return jsonify(logged_in_as=current_usuario), 200
+
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':

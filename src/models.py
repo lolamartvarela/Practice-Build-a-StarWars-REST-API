@@ -8,7 +8,9 @@ class Usuario(db.Model):
     nombre = db.Column(db.String(250), nullable=False)
     apellido = db.Column(db.String(250), nullable=False)
     email = db.Column(db.String(250), nullable=False)
+    password = db.Column(db.String(250), nullable=False)
     usuario = db.relationship('Favoritos', backref= 'usuario', lazy=True)
+    
 
     def __repr__(self):
         return '<Usuario %r>' % self.id
@@ -19,6 +21,7 @@ class Usuario(db.Model):
             "nombre": self.nombre,
             "apellido": self.apellido,
             "email": self.email,
+            "password": self.password,
             # do not serialize the password, its a security breach
         }
         
